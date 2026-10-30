@@ -458,6 +458,60 @@ TEST(World, ObjectPoseAndSubframes)
   EXPECT_EQ(1.0, pose(2, 3));  // z
 }
 
+TEST(World, CopyOnWriteMoveShapesInObject)
+{
+  World world;
+  shapes::ShapePtr ball = std::make_shared<shapes::Sphere>(1.0);
+  shapes::ShapePtr box = std::make_shared<shapes::Box>(1, 1, 1);
+
+  world.addToObject("obj", ball, Eigen::Isometry3d::Identity());
+  world.addToObject("obj", box, Eigen::Isometry3d(Eigen::Translation3d(0, 1, 0)));
+
+  World copy(world);
+  ASSERT_EQ(world.getObject("obj").get(), copy.getObject("obj").get());
+
+  EigenSTL::vector_Isometry3d updated_poses;
+  updated_poses.push_back(Eigen::Isometry3d(Eigen::Translation3d(5, 0, 0)));
+  updated_poses.push_back(Eigen::Isometry3d(Eigen::Translation3d(0, 7, 0)));
+
+  ASSERT_TRUE(world.moveShapesInObject("obj", updated_poses));
+
+  EXPECT_NE(world.getObject("obj").get(), copy.getObject("obj").get());
+  EXPECT_DOUBLE_EQ(5.0, world.getGlobalShapeTransform("obj", 0).translation().x());
+  EXPECT_DOUBLE_EQ(7.0, world.getGlobalShapeTransform("obj", 1).translation().y());
+  EXPECT_DOUBLE_EQ(0.0, copy.getGlobalShapeTransform("obj", 0).translation().x());
+  EXPECT_DOUBLE_EQ(1.0, copy.getGlobalShapeTransform("obj", 1).translation().y());
+}
+
+TEST(World, CopyOnWriteSetSubframesOfObject)
+{
+  World world;
+  ASSERT_TRUE(world.setObjectPose("obj", Eigen::Isometry3d::Identity()));
+
+  moveit::core::FixedTransformsMap initial_subframes;
+  initial_subframes["tool"] = Eigen::Isometry3d(Eigen::Translation3d(0, 0, 1));
+  ASSERT_TRUE(world.setSubframesOfObject("obj", initial_subframes));
+
+  World copy(world);
+  ASSERT_EQ(world.getObject("obj").get(), copy.getObject("obj").get());
+
+  moveit::core::FixedTransformsMap updated_subframes;
+  updated_subframes["tool"] = Eigen::Isometry3d(Eigen::Translation3d(0, 0, 5));
+  ASSERT_TRUE(world.setSubframesOfObject("obj", updated_subframes));
+
+  EXPECT_NE(world.getObject("obj").get(), copy.getObject("obj").get());
+
+  bool found_in_world = false;
+  bool found_in_copy = false;
+  const Eigen::Isometry3d& world_transform = world.getTransform("obj/tool", found_in_world);
+  const Eigen::Isometry3d& copy_transform = copy.getTransform("obj/tool", found_in_copy);
+
+  ASSERT_TRUE(found_in_world);
+  ASSERT_TRUE(found_in_copy);
+  EXPECT_DOUBLE_EQ(5.0, world_transform.translation().z());
+  EXPECT_DOUBLE_EQ(1.0, copy_transform.translation().z());
+}
+
 int main(int argc, char** argv)
 {
   testing::InitGoogleTest(&argc, argv);
