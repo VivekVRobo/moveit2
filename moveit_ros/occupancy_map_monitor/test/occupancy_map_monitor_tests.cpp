@@ -123,7 +123,10 @@ TEST(OccupancyMapMonitorTests, ConfiguresBeforeInitializeAndRejectsFailedUpdater
   EXPECT_CALL(*mock_middleware_handle, loadOccupancyMapUpdater("test_updater"))
       .WillOnce(::testing::Return(updater));
   EXPECT_CALL(*mock_middleware_handle, initializeOccupancyMapUpdater(updater))
-      .WillOnce(::testing::Return(false));
+      .WillOnce(::testing::Invoke([&updater](occupancy_map_monitor::OccupancyMapUpdaterPtr value) {
+        EXPECT_FALSE(value->initialize(nullptr));
+        return false;
+      }));
   EXPECT_CALL(*mock_middleware_handle, createSaveMapService).Times(1);
   EXPECT_CALL(*mock_middleware_handle, createLoadMapService).Times(1);
 
@@ -137,6 +140,36 @@ TEST(OccupancyMapMonitorTests, ConfiguresBeforeInitializeAndRejectsFailedUpdater
   EXPECT_TRUE(updater->initialize_called_);
   EXPECT_TRUE(updater->initialize_saw_params_);
   EXPECT_FALSE(updater->start_called_);
+}
+
+TEST(OccupancyMapMonitorTests, StartsSuccessfullyInitializedUpdater)
+{
+  auto mock_middleware_handle = std::make_unique<MockMiddlewareHandle>();
+  auto updater = std::make_shared<TestOccupancyMapUpdater>(true);
+
+  occupancy_map_monitor::OccupancyMapMonitor::Parameters parameters{ 0.1, "map", { { "sensor", "test_updater" } } };
+
+  EXPECT_CALL(*mock_middleware_handle, getParameters).WillOnce(::testing::Return(parameters));
+  EXPECT_CALL(*mock_middleware_handle, loadOccupancyMapUpdater("test_updater"))
+      .WillOnce(::testing::Return(updater));
+  EXPECT_CALL(*mock_middleware_handle, initializeOccupancyMapUpdater(updater))
+      .WillOnce(::testing::Invoke([&updater](occupancy_map_monitor::OccupancyMapUpdaterPtr value) {
+        EXPECT_TRUE(value->initialize(nullptr));
+        return true;
+      }));
+  EXPECT_CALL(*mock_middleware_handle, createSaveMapService).Times(1);
+  EXPECT_CALL(*mock_middleware_handle, createLoadMapService).Times(1);
+
+  occupancy_map_monitor::OccupancyMapMonitor monitor{
+    std::move(mock_middleware_handle), std::make_shared<tf2_ros::Buffer>(std::make_shared<rclcpp::Clock>())
+  };
+
+  monitor.startMonitor();
+
+  EXPECT_TRUE(updater->params_set_);
+  EXPECT_TRUE(updater->initialize_called_);
+  EXPECT_TRUE(updater->initialize_saw_params_);
+  EXPECT_TRUE(updater->start_called_);
 }
 
 TEST(OccupancyMapMonitorTests, ConstructorTest)
