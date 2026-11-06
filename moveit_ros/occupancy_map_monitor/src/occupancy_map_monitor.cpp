@@ -122,7 +122,7 @@ OccupancyMapMonitor::OccupancyMapMonitor(std::unique_ptr<MiddlewareHandle> middl
 
     // Do not retain an updater that fails initialization. A failed updater
     // must never reach startMonitor(), which would otherwise start it.
-    if (!occupancy_map_updater->initialize(middleware_handle_->getNode()))
+    if (!middleware_handle_->initializeOccupancyMapUpdater(occupancy_map_updater))
     {
       RCLCPP_ERROR_STREAM(logger_, "Failed to initialize updater of type " << occupancy_map_updater->getType());
       continue;
