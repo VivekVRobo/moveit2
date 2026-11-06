@@ -112,7 +112,7 @@ public:
      *
      * @param[in]  occupancy_map_updater  The occupancy map updater
      */
-    virtual void initializeOccupancyMapUpdater(OccupancyMapUpdaterPtr occupancy_map_updater) = 0;
+    virtual bool initializeOccupancyMapUpdater(OccupancyMapUpdaterPtr occupancy_map_updater) = 0;
 
     /**
      * @brief      Creates a save map service.
