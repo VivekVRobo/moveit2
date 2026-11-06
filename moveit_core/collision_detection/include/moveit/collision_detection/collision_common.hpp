@@ -74,7 +74,13 @@ struct Contact
 {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  /** \brief contact position */
+  /**
+   * \brief Contact position in the robot model frame.
+   *
+   * For collision checks performed by MoveIt, the returned contact position is expressed in the
+   * robot model (root-link) frame used by the collision environment. For a planning scene, this
+   * is the same frame returned by `PlanningScene::getPlanningFrame()`.
+   */
   Eigen::Vector3d pos;
 
   /** \brief normal unit vector at contact */
