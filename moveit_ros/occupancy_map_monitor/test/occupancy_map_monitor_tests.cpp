@@ -123,9 +123,7 @@ TEST(OccupancyMapMonitorTests, ConfiguresBeforeInitializeAndRejectsFailedUpdater
   EXPECT_CALL(*mock_middleware_handle, loadOccupancyMapUpdater("test_updater"))
       .WillOnce(::testing::Return(updater));
   EXPECT_CALL(*mock_middleware_handle, initializeOccupancyMapUpdater(updater))
-      .WillOnce(::testing::Invoke([&updater](occupancy_map_monitor::OccupancyMapUpdaterPtr value) {
-        value->initialize(nullptr);
-      }));
+      .WillOnce(::testing::Return(false));
   EXPECT_CALL(*mock_middleware_handle, createSaveMapService).Times(1);
   EXPECT_CALL(*mock_middleware_handle, createLoadMapService).Times(1);
 
