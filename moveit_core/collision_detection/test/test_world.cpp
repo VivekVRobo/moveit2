@@ -372,6 +372,54 @@ TEST(World, TrackChanges)
   EXPECT_EQ(4, ta3.cnt_);
 }
 
+TEST(World, CopyOnWriteForObjectMutations)
+{
+  World world;
+
+  shapes::ShapePtr box = std::make_shared<shapes::Box>(1, 1, 1);
+  shapes::ShapePtr cylinder = std::make_shared<shapes::Cylinder>(0.5, 2);
+  world.addToObject("shared", box, Eigen::Isometry3d::Identity());
+  world.addToObject("shared", cylinder, Eigen::Isometry3d(Eigen::Translation3d(0, 0, 2)));
+
+  moveit::core::FixedTransformsMap initial_subframes;
+  initial_subframes["tool"] = Eigen::Isometry3d(Eigen::Translation3d(1, 0, 0));
+  ASSERT_TRUE(world.setSubframesOfObject("shared", initial_subframes));
+
+  World copied_world(world);
+
+  const World::ObjectConstPtr copied_object = copied_world.getObject("shared");
+  ASSERT_TRUE(copied_object);
+  ASSERT_EQ(2u, copied_object->shape_poses_.size());
+  ASSERT_EQ(1.0, copied_object->subframe_poses_.at("tool")(0, 3));
+
+  EigenSTL::vector_Isometry3d moved_shape_poses = copied_object->shape_poses_;
+  moved_shape_poses[0] = Eigen::Isometry3d(Eigen::Translation3d(0, 0, 5));
+  moved_shape_poses[1] = Eigen::Isometry3d(Eigen::Translation3d(0, 0, 6));
+
+  ASSERT_TRUE(world.moveShapesInObject("shared", moved_shape_poses));
+
+  const World::ObjectConstPtr original_after_shape_move = world.getObject("shared");
+  const World::ObjectConstPtr copied_after_shape_move = copied_world.getObject("shared");
+  ASSERT_TRUE(original_after_shape_move);
+  ASSERT_TRUE(copied_after_shape_move);
+
+  EXPECT_EQ(5.0, original_after_shape_move->shape_poses_[0](2, 3));
+  EXPECT_EQ(6.0, original_after_shape_move->shape_poses_[1](2, 3));
+  EXPECT_EQ(0.0, copied_after_shape_move->shape_poses_[0](2, 3));
+  EXPECT_EQ(2.0, copied_after_shape_move->shape_poses_[1](2, 3));
+
+  moveit::core::FixedTransformsMap moved_subframes;
+  moved_subframes["tool"] = Eigen::Isometry3d(Eigen::Translation3d(9, 0, 0));
+
+  ASSERT_TRUE(world.setSubframesOfObject("shared", moved_subframes));
+
+  const World::ObjectConstPtr copied_after_subframe_move = copied_world.getObject("shared");
+  ASSERT_TRUE(copied_after_subframe_move);
+  EXPECT_EQ(9.0, world.getTransform("shared/tool")(0, 3));
+  EXPECT_EQ(1.0, copied_after_subframe_move->subframe_poses_.at("tool")(0, 3));
+  EXPECT_EQ(1.0, copied_world.getTransform("shared/tool")(0, 3));
+}
+
 TEST(World, ObjectPoseAndSubframes)
 {
   World world;
