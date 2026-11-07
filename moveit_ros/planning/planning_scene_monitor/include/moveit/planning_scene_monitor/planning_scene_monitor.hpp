@@ -187,6 +187,8 @@ public:
    * @see LockedPlanningSceneRO
    * @see LockedPlanningSceneRW.
    * @return A pointer to the current planning scene.*/
+  [[deprecated("Use LockedPlanningSceneRO or LockedPlanningSceneRW for synchronized access")]]
+
   const planning_scene::PlanningScenePtr& getPlanningScene()
   {
     return scene_;
@@ -195,6 +197,8 @@ public:
   /*! @brief <b>Avoid this function!</b>  Returns an @b
    *         unsafe pointer to the current planning scene.
    * @copydetails PlanningSceneMonitor::getPlanningScene() */
+  [[deprecated("Use LockedPlanningSceneRO for synchronized read access")]]
+
   const planning_scene::PlanningSceneConstPtr& getPlanningScene() const
   {
     return scene_const_;
@@ -650,6 +654,9 @@ public:
     return planning_scene_monitor_ && planning_scene_monitor_->getPlanningScene();
   }
 
+  [[deprecated("Use getPlanningSceneMonitor() with an explicit lock instead")]]
+
+
   operator const planning_scene::PlanningSceneConstPtr&() const
   {
     return static_cast<const PlanningSceneMonitor*>(planning_scene_monitor_.get())->getPlanningScene();
@@ -738,6 +745,9 @@ public:
     : LockedPlanningSceneRO(planning_scene_monitor, false)
   {
   }
+
+  [[deprecated("Use getPlanningSceneMonitor() with an explicit lock instead")]]
+
 
   operator const planning_scene::PlanningScenePtr&()
   {
