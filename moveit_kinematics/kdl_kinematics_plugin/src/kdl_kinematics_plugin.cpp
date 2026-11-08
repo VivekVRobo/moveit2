@@ -438,11 +438,14 @@ int KDLKinematicsPlugin::CartToJnt(KDL::ChainIkSolverVelMimicSVD& ik_solver, con
     delta_twist = diff(f, p_in);
     RCLCPP_DEBUG_STREAM(getLogger(), "[" << std::setw(3) << i << "] delta_twist: " << delta_twist);
 
-    // check norms of position and orientation errors
+    // Check the position and orientation errors independently. They have different
+    // physical units (meters and radians), so normalize each by the common
+    // convergence tolerance before combining them into a dimensionless metric.
     const double position_error = delta_twist.vel.Norm();
     const double orientation_error = ik_solver.isPositionOnly() ? 0 : delta_twist.rot.Norm();
-    const double delta_twist_norm = std::max(position_error, orientation_error);
-    if (delta_twist_norm <= params_.epsilon)
+    const double delta_twist_norm =
+        std::max(position_error / params_.epsilon, orientation_error / params_.epsilon);
+    if (delta_twist_norm <= 1.0)
     {
       success = true;
       break;
