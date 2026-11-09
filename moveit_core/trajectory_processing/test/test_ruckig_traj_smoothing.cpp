@@ -36,7 +36,8 @@
 #include <gtest/gtest.h>
 #include <moveit/trajectory_processing/ruckig_traj_smoothing.hpp>
 #include <moveit/robot_state/robot_state.hpp>
-#include <moveit/utils/robot_model_test_utils.hpp>\n#include <moveit/robot_trajectory/robot_trajectory.hpp>
+#include <moveit/utils/robot_model_test_utils.hpp>
+#include <moveit/robot_trajectory/robot_trajectory.hpp>
 
 namespace
 {
