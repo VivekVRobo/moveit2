@@ -37,6 +37,7 @@
 #include <moveit/trajectory_processing/ruckig_traj_smoothing.hpp>
 #include <moveit/robot_state/robot_state.hpp>
 #include <moveit/utils/robot_model_test_utils.hpp>
+#include <moveit/robot_trajectory/robot_trajectory.hpp>
 
 namespace
 {
