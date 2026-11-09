@@ -220,7 +220,7 @@ bool RuckigSmoothing::getRobotModelBounds(const double max_velocity_scaling_fact
       RCLCPP_WARN_STREAM_ONCE(getLogger(),
                               "Joint velocity limits are not defined. Using the default "
                                   << default_velocity
-                                  << (is_prismatic ? " m/s" : " rad/s") You can define velocity limits in the URDF or joint_limits.yaml.");
+                                  << (is_prismatic ? " m/s. " : " rad/s. ")\n                                  << "You can define velocity limits in the URDF or joint_limits.yaml.");
       ruckig_input.max_velocity.at(i) = max_velocity_scaling_factor * default_velocity;
     }
     if (bounds.acceleration_bounded_)
@@ -232,10 +232,10 @@ bool RuckigSmoothing::getRobotModelBounds(const double max_velocity_scaling_fact
       RCLCPP_WARN_STREAM_ONCE(getLogger(),
                               "Joint acceleration limits are not defined. Using the default "
                                   << default_acceleration
-                                  << (is_prismatic ? " m/s^2" : " rad/s^2") You can define acceleration limits in the URDF or joint_limits.yaml.");
+                                  << (is_prismatic ? " m/s^2. " : " rad/s^2. ")\n                                  << "You can define acceleration limits in the URDF or joint_limits.yaml.");
       ruckig_input.max_acceleration.at(i) = max_acceleration_scaling_factor * default_acceleration;
     }
-    ruckig_input.max_jerk.at(i) = bounds.jerk_bounded_ ? bounds.max_jerk_ : DEFAULT_MAX_JERK;
+    ruckig_input.max_jerk.at(i) = bounds.jerk_bounded_ ? bounds.max_jerk_ : default_jerk;
     if (bounds.jerk_bounded_)
     {
       ruckig_input.max_jerk.at(i) = bounds.max_jerk_;
@@ -243,8 +243,7 @@ bool RuckigSmoothing::getRobotModelBounds(const double max_velocity_scaling_fact
     else
     {
       RCLCPP_WARN_STREAM_ONCE(getLogger(), "Joint jerk limits are not defined. Using the default "
-                                               << default_jerk
-                                               << (is_prismatic ? " m/s^3" : " rad/s^3") You can define jerk limits in joint_limits.yaml.");
+                                               << default_jerk\n                                               << (is_prismatic ? " m/s^3. " : " rad/s^3. ") You can define jerk limits in joint_limits.yaml.");
       ruckig_input.max_jerk.at(i) = default_jerk;
     }
   }
