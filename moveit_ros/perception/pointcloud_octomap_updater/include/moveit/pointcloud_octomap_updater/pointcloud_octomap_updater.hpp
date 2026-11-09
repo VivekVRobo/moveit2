@@ -58,6 +58,7 @@
 #include <moveit/point_containment_filter/shape_mask.hpp>
 
 #include <memory>
+#include <mutex>
 
 namespace occupancy_map_monitor
 {
@@ -107,6 +108,10 @@ private:
 
   message_filters::Subscriber<sensor_msgs::msg::PointCloud2>* point_cloud_subscriber_;
   tf2_ros::MessageFilter<sensor_msgs::msg::PointCloud2>* point_cloud_filter_;
+
+  // Synchronizes callback execution with stop(), so subscriber/filter destruction
+  // cannot race with an in-flight point-cloud callback.
+  std::mutex callback_mutex_;
 
   /* used to store all cells in the map which a given ray passes through during raycasting.
      we cache this here because it dynamically pre-allocates a lot of memory in its constructor */

@@ -63,6 +63,7 @@
 #include <rclcpp/version.h>
 
 #include <memory>
+#include <mutex>
 
 namespace occupancy_map_monitor
 {
@@ -136,6 +137,7 @@ bool PointCloudOctomapUpdater::initialize(const rclcpp::Node::SharedPtr& node)
 
 void PointCloudOctomapUpdater::start()
 {
+  std::scoped_lock lock(callback_mutex_);
   std::string prefix = "";
   if (!ns_.empty())
     prefix = ns_ + "/";
@@ -190,6 +192,7 @@ void PointCloudOctomapUpdater::start()
 
 void PointCloudOctomapUpdater::stop()
 {
+  std::scoped_lock lock(callback_mutex_);
   delete point_cloud_filter_;
   delete point_cloud_subscriber_;
   point_cloud_filter_ = nullptr;
@@ -233,6 +236,7 @@ void PointCloudOctomapUpdater::updateMask(const sensor_msgs::msg::PointCloud2& /
 
 void PointCloudOctomapUpdater::cloudMsgCallback(const sensor_msgs::msg::PointCloud2::ConstSharedPtr& cloud_msg)
 {
+  std::scoped_lock lock(callback_mutex_);
   RCLCPP_DEBUG(logger_, "Received a new point cloud message");
   rclcpp::Time start = rclcpp::Clock(RCL_ROS_TIME).now();
 
