@@ -182,7 +182,16 @@ void MoveGroupMoveAction::executeMoveCallbackPlanAndExecute(const std::shared_pt
     return;
   }
 
-  context_->plan_execution_->planAndExecute(plan, planning_scene_diff, opt);
+  try
+  {
+    context_->plan_execution_->planAndExecute(plan, planning_scene_diff, opt);
+  }
+  catch (const std::exception& ex)
+  {
+    RCLCPP_ERROR(getLogger(), "Plan execution threw an exception: %s", ex.what());
+    action_res->error_code.val = moveit_msgs::msg::MoveItErrorCodes::FAILURE;
+    return;
+  }
 
   convertToMsg(plan.plan_components, action_res->trajectory_start, action_res->planned_trajectory);
   if (plan.executed_trajectory)
