@@ -246,7 +246,8 @@ bool RuckigSmoothing::getRobotModelBounds(const double max_velocity_scaling_fact
     {
       RCLCPP_WARN_STREAM_ONCE(getLogger(), "Joint jerk limits are not defined. Using the default "
                                                << default_jerk
-                                               << (is_prismatic ? " m/s^3. " : " rad/s^3. ")\n                                               << "You can define jerk limits in joint_limits.yaml.");
+                                               << (is_prismatic ? " m/s^3. " : " rad/s^3. ")
+                                               << "You can define jerk limits in joint_limits.yaml.");
       ruckig_input.max_jerk.at(i) = default_jerk;
     }
   }
