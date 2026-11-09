@@ -1973,9 +1973,9 @@ bool PlanningScene::processCollisionObjectMove(const moveit_msgs::msg::Collision
     utilities::poseMsgToEigen(object.pose, header_to_pose_transform);
 
     const Eigen::Isometry3d object_frame_transform = world_to_object_header_transform * header_to_pose_transform;
-    world_->setObjectPose(object.id, object_frame_transform);
 
-    // update shape poses
+    // Validate all supplied shape poses before mutating the world object. A failed MOVE
+    // must leave the existing collision object unchanged.
     if (!object.primitive_poses.empty() || !object.mesh_poses.empty() || !object.plane_poses.empty())
     {
       auto world_object = world_->getObject(object.id);  // object exists, checked earlier
@@ -1988,6 +1988,14 @@ bool PlanningScene::processCollisionObjectMove(const moveit_msgs::msg::Collision
                      object.id.c_str());
         return false;
       }
+    }
+
+    world_->setObjectPose(object.id, object_frame_transform);
+
+    // update shape poses
+    if (!object.primitive_poses.empty() || !object.mesh_poses.empty() || !object.plane_poses.empty())
+    {
+      auto world_object = world_->getObject(object.id);  // object exists, checked earlier
 
       // order matters -> primitive, mesh and plane
       EigenSTL::vector_Isometry3d shape_poses;

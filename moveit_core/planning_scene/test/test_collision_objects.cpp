@@ -100,6 +100,43 @@ TEST(PlanningScene, fillInPrimitivePose)
       << "scene did not implicitly fill in identity pose for only primitive";
 }
 
+TEST(PlanningScene, moveRejectsMismatchedShapePoseCountWithoutMutation)
+{
+  moveit::core::RobotModelPtr robot_model(moveit::core::RobotModelBuilder("empty_robot", "base_link").build());
+  planning_scene::PlanningScene scene(robot_model);
+
+  moveit_msgs::msg::CollisionObject add;
+  add.header.frame_id = robot_model->getModelFrame();
+  add.id = "move_validation_object";
+  add.operation = moveit_msgs::msg::CollisionObject::ADD;
+  add.pose.position.x = 1.0;
+  add.pose.orientation.w = 1.0;
+  makeSphere(add);
+  makeSphere(add);
+  ASSERT_TRUE(scene.processCollisionObjectMsg(add));
+
+  const auto before_object = scene.getWorld()->getObject(add.id);
+  ASSERT_TRUE(before_object);
+  const Eigen::Isometry3d before_pose = before_object->pose_;
+  const auto before_shape_poses = before_object->shape_poses_;
+
+  moveit_msgs::msg::CollisionObject move = add;
+  move.operation = moveit_msgs::msg::CollisionObject::MOVE;
+  move.pose.position.x = 2.0;
+  move.primitive_poses.resize(1);
+
+  EXPECT_FALSE(scene.processCollisionObjectMsg(move));
+
+  const auto after_object = scene.getWorld()->getObject(add.id);
+  ASSERT_TRUE(after_object);
+  EXPECT_TRUE(after_object->pose_.isApprox(before_pose));
+  ASSERT_EQ(after_object->shape_poses_.size(), before_shape_poses.size());
+  for (std::size_t i = 0; i < before_shape_poses.size(); ++i)
+  {
+    EXPECT_TRUE(after_object->shape_poses_[i].isApprox(before_shape_poses[i]));
+  }
+}
+
 TEST(PlanningScene, rememberMetadataWhenAttached)
 {
   moveit::core::RobotModelPtr robot_model(moveit::core::RobotModelBuilder("empty_robot", "base_link").build());
