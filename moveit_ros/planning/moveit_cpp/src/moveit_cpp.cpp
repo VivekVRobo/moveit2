@@ -125,9 +125,8 @@ bool MoveItCpp::loadPlanningSceneMonitor(const PlanningSceneMonitorOptions& opti
 
 bool MoveItCpp::loadPlanningPipelines(const PlanningPipelineOptions& options)
 {
-  // TODO(henningkayser): Use parent namespace for planning pipeline config lookup
-  planning_pipelines_ =
-      moveit::planning_pipeline_interfaces::createPlanningPipelineMap(options.pipeline_names, getRobotModel(), node_);
+  planning_pipelines_ = moveit::planning_pipeline_interfaces::createPlanningPipelineMap(
+      options.pipeline_names, getRobotModel(), node_, options.parent_namespace);
 
   if (planning_pipelines_.empty())
   {
