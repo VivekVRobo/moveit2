@@ -133,6 +133,25 @@ TEST_F(ControllersTest, OutputFanuc)
 // YAML equivalence check isn't possible here because the panda gripper config
 // carries extra parameters (effort/velocity interfaces) the Setup Assistant does
 // not generate, so assert on the gripper parameter shape directly.
+TEST_F(ControllersTest, OutputPandaInitialPositionsUseRobotModelDefaults)
+{
+  config_data_->preloadWithFullConfig("moveit_resources_panda_moveit_config");
+  config_data_->get<moveit_setup::controllers::ControlXacroConfig>("control_xacro")->loadFromDescription();
+  generateFiles<moveit_setup::controllers::ControlXacroConfig>("control_xacro");
+
+  YAML::Node generated = YAML::LoadFile(output_dir_ / "config/initial_positions.yaml");
+  const YAML::Node positions = generated["initial_positions"];
+  ASSERT_TRUE(positions);
+
+  EXPECT_DOUBLE_EQ(0.0, positions["panda_joint1"].as<double>());
+  EXPECT_DOUBLE_EQ(-0.785, positions["panda_joint2"].as<double>());
+  EXPECT_DOUBLE_EQ(0.0, positions["panda_joint3"].as<double>());
+  EXPECT_DOUBLE_EQ(-2.356, positions["panda_joint4"].as<double>());
+  EXPECT_DOUBLE_EQ(0.0, positions["panda_joint5"].as<double>());
+  EXPECT_DOUBLE_EQ(1.571, positions["panda_joint6"].as<double>());
+  EXPECT_DOUBLE_EQ(0.785, positions["panda_joint7"].as<double>());
+}
+
 TEST_F(ControllersTest, OutputPandaGripperUsesSingularJoint)
 {
   config_data_->preloadWithFullConfig("moveit_resources_panda_moveit_config");
