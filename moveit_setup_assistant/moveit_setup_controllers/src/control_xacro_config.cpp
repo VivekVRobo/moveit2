@@ -174,11 +174,32 @@ void ControlXacroConfig::setControlInterfaces(const ControlInterfaces& ci)
 
     new_joint_interfaces_[joint_name] = default_ci_;
 
-    // Setup the initial state
+    // Use MoveIt's model default instead of assuming zero is valid for every joint.
+    // For bounded joints, this is typically the midpoint when zero is outside the limits.
+    const auto robot_model = config_data_->get<SRDFConfig>("srdf")->getRobotModel();
+    const auto* joint_model = robot_model->getJointModel(joint_name);
+    std::map<std::string, double> default_positions;
+    robot_model->getVariableDefaultPositions(default_positions);
+
     std::vector<double> joint_value;
-    // TODO: There could be an option to load a group state from the RobotPoses
-    //       For now, just assume one DOF, and it is zero
-    joint_value.push_back(0.0);
+    if (joint_model)
+    {
+      for (const std::string& variable_name : joint_model->getVariableNames())
+      {
+        const auto it = default_positions.find(variable_name);
+        if (it != default_positions.end())
+        {
+          joint_value.push_back(it->second);
+        }
+      }
+    }
+
+    // Keep the existing fallback for unexpected joints with no model variables.
+    if (joint_value.empty())
+    {
+      joint_value.push_back(0.0);
+    }
+
     initial_group_state_.joint_values_[joint_name] = joint_value;
   }
 
