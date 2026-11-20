@@ -54,6 +54,8 @@ TEST(RDFIntegration, non_existent)
   rdf_loader::RDFLoader loader(node, "does_not_exist");
   ASSERT_EQ(nullptr, loader.getURDF());
   ASSERT_EQ(nullptr, loader.getSRDF());
+  EXPECT_FALSE(node->has_parameter("does_not_exist"));
+  EXPECT_FALSE(node->has_parameter("does_not_exist_semantic"));
 }
 
 TEST(RDFIntegration, topic_based)
