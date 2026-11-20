@@ -95,10 +95,18 @@ std::string SynchronizedStringParameter::loadInitialValue(const std::shared_ptr<
 
 bool SynchronizedStringParameter::getMainParameter()
 {
-  // Check if the parameter is declared, declare it if it's not declared yet
+  // Declare the parameter when needed so parameter overrides can be read, but do not
+  // leave a NOT_SET parameter behind when the value is only available on the topic.
   if (!node_->has_parameter(name_))
   {
     node_->declare_parameter(name_, rclcpp::ParameterType::PARAMETER_STRING);
+  }
+
+  const auto parameter_type = node_->get_parameter_types({ name_ }).front();
+  if (parameter_type == rclcpp::ParameterType::PARAMETER_NOT_SET)
+  {
+    node_->undeclare_parameter(name_);
+    return false;
   }
 
   node_->get_parameter_or(name_, content_, std::string());
