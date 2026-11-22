@@ -37,6 +37,9 @@
 #include <moveit_setup_controllers/ros2_controllers_config.hpp>
 #include <moveit_setup_controllers/moveit_controllers_config.hpp>
 #include <moveit_setup_controllers/ros2_controllers.hpp>
+#include <moveit_setup_controllers/initial_position.hpp>
+
+#include <urdf/model.h>
 
 using moveit_setup::expectYamlEquivalence;
 using moveit_setup::getSharePath;
@@ -145,6 +148,26 @@ TEST_F(ControllersTest, OutputPandaGripperUsesSingularJoint)
   ASSERT_TRUE(params) << "panda_hand_controller missing ros__parameters";
   EXPECT_TRUE(params["joint"]) << "gripper controller must emit the singular 'joint' parameter";
   EXPECT_FALSE(params["joints"]) << "gripper controller must not emit the 'joints' list";
+}
+
+TEST_F(ControllersTest, DefaultJointPositionUsesMoveItBounds)
+{
+  urdf::Joint bounded_joint;
+  bounded_joint.limits = std::make_shared<urdf::JointLimits>();
+  bounded_joint.limits->lower = -1.57;
+  bounded_joint.limits->upper = 1.57;
+  EXPECT_DOUBLE_EQ(0.0, moveit_setup::controllers::getDefaultJointPosition(bounded_joint));
+
+  bounded_joint.limits->lower = -2.96;
+  bounded_joint.limits->upper = -0.32;
+  EXPECT_DOUBLE_EQ(-1.64, moveit_setup::controllers::getDefaultJointPosition(bounded_joint));
+
+  bounded_joint.limits->lower = 0.02;
+  bounded_joint.limits->upper = 0.05;
+  EXPECT_DOUBLE_EQ(0.035, moveit_setup::controllers::getDefaultJointPosition(bounded_joint));
+
+  bounded_joint.limits.reset();
+  EXPECT_DOUBLE_EQ(0.0, moveit_setup::controllers::getDefaultJointPosition(bounded_joint));
 }
 
 TEST_F(ControllersTest, AddDefaultControllers)
