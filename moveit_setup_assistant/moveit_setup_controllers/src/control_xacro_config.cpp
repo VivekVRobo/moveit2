@@ -35,6 +35,7 @@
 /* Author: David V. Lu!! */
 
 #include <moveit_setup_controllers/control_xacro_config.hpp>
+#include <moveit_setup_controllers/initial_position.hpp>
 #include <moveit_setup_framework/data_warehouse.hpp>
 #include <tinyxml2.h>
 #include <algorithm>
@@ -174,11 +175,12 @@ void ControlXacroConfig::setControlInterfaces(const ControlInterfaces& ci)
 
     new_joint_interfaces_[joint_name] = default_ci_;
 
-    // Setup the initial state
+    // Setup the initial state using the same default-position rule as MoveIt:
+    // zero when it is within the joint bounds, otherwise the midpoint.
     std::vector<double> joint_value;
-    // TODO: There could be an option to load a group state from the RobotPoses
-    //       For now, just assume one DOF, and it is zero
-    joint_value.push_back(0.0);
+    const auto& urdf_model = config_data_->get<URDFConfig>("urdf")->getModel();
+    const urdf::JointConstSharedPtr joint = urdf_model.getJoint(joint_name);
+    joint_value.push_back(joint ? getDefaultJointPosition(*joint) : 0.0);
     initial_group_state_.joint_values_[joint_name] = joint_value;
   }
 
