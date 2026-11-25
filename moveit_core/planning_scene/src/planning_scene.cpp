@@ -1904,10 +1904,6 @@ bool PlanningScene::processCollisionObjectAdd(const moveit_msgs::msg::CollisionO
     return false;
   }
 
-  // replace the object if ADD is specified instead of APPEND
-  if (object.operation == moveit_msgs::msg::CollisionObject::ADD && world_->hasObject(object.id))
-    world_->removeObject(object.id);
-
   const Eigen::Isometry3d& world_to_object_header_transform = getFrameTransform(object.header.frame_id);
   Eigen::Isometry3d header_to_pose_transform;
   std::vector<shapes::ShapeConstPtr> shapes;
