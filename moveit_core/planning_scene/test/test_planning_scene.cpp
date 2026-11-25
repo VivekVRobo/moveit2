@@ -78,6 +78,41 @@ TEST(PlanningScene, TestOneShapeObjectPose)
   EXPECT_TRUE(expected_transfrom.isApprox(ps.getFrameTransform(object_name)));
 }
 
+TEST(PlanningScene, AddDoesNotRemoveExistingObjectOnInvalidReplacement)
+{
+  urdf::ModelInterfaceSharedPtr urdf_model = moveit::core::loadModelInterface("pr2");
+  srdf::ModelSharedPtr srdf_model = std::make_shared<srdf::Model>();
+  planning_scene::PlanningScene ps(urdf_model, srdf_model);
+
+  moveit_msgs::msg::CollisionObject valid;
+  valid.header.frame_id = "base_footprint";
+  valid.id = "replace_me";
+  valid.operation = moveit_msgs::msg::CollisionObject::ADD;
+  valid.primitives.push_back([] {
+    shape_msgs::msg::SolidPrimitive primitive;
+    primitive.type = shape_msgs::msg::SolidPrimitive::BOX;
+    primitive.dimensions = { 0.1, 0.1, 0.1 };
+    return primitive;
+  }());
+  valid.primitive_poses.push_back([] {
+    geometry_msgs::msg::Pose pose;
+    pose.position.x = 0.5;
+    pose.orientation.w = 1.0;
+    return pose;
+  }());
+
+  ASSERT_TRUE(ps.processCollisionObjectMsg(valid));
+  ASSERT_TRUE(ps.getWorld()->hasObject("replace_me"));
+  const Eigen::Isometry3d original_pose = ps.getFrameTransform("replace_me");
+
+  moveit_msgs::msg::CollisionObject invalid = valid;
+  invalid.primitive_poses.push_back(geometry_msgs::msg::Pose());
+
+  EXPECT_FALSE(ps.processCollisionObjectMsg(invalid));
+  ASSERT_TRUE(ps.getWorld()->hasObject("replace_me"));
+  EXPECT_TRUE(original_pose.isApprox(ps.getFrameTransform("replace_me")));
+}
+
 TEST(PlanningScene, LoadRestore)
 {
   urdf::ModelInterfaceSharedPtr urdf_model = moveit::core::loadModelInterface("pr2");
