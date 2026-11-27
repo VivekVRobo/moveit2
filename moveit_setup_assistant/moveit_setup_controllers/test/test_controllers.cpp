@@ -147,6 +147,32 @@ TEST_F(ControllersTest, OutputPandaGripperUsesSingularJoint)
   EXPECT_FALSE(params["joints"]) << "gripper controller must not emit the 'joints' list";
 }
 
+TEST_F(ControllersTest, GeneratedInitialPositionsUseRobotDefaults)
+{
+  config_data_->preloadWithFullConfig("moveit_resources_panda_moveit_config");
+  auto control_xacro = config_data_->get<moveit_setup::controllers::ControlXacroConfig>("control_xacro");
+  control_xacro->loadFromDescription();
+  generateFiles<ROS2ControllersConfig>("ros2_controllers");
+
+  YAML::Node generated = YAML::LoadFile(output_dir_ / "config/initial_positions.yaml");
+  const YAML::Node initial_positions = generated["initial_positions"];
+  ASSERT_TRUE(initial_positions) << "generated initial_positions.yaml is missing initial_positions";
+
+  std::map<std::string, double> default_positions;
+  config_data_->get<moveit_setup::SRDFConfig>("srdf")->getRobotModel()->getVariableDefaultPositions(default_positions);
+
+  for (const auto& joint_name : config_data_->get<moveit_setup::SRDFConfig>("srdf")->getJointNames("panda_arm", true, false))
+  {
+    const auto default_position = default_positions.find(joint_name);
+    ASSERT_NE(default_position, default_positions.end()) << "missing default position for " << joint_name;
+    if (initial_positions[joint_name])
+    {
+      EXPECT_DOUBLE_EQ(initial_positions[joint_name].as<double>(), default_position->second)
+          << "generated default position differs for " << joint_name;
+    }
+  }
+}
+
 TEST_F(ControllersTest, AddDefaultControllers)
 {
   // only preload urdf and srdf
