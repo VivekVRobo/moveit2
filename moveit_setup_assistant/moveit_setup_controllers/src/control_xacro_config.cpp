@@ -38,6 +38,7 @@
 #include <moveit_setup_framework/data_warehouse.hpp>
 #include <tinyxml2.h>
 #include <algorithm>
+#include <map>
 
 namespace moveit_setup
 {
