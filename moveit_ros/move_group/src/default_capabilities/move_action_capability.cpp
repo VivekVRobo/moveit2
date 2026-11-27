@@ -187,6 +187,7 @@ void MoveGroupMoveAction::executeMoveCallbackPlanAndExecute(const std::shared_pt
   convertToMsg(plan.plan_components, action_res->trajectory_start, action_res->planned_trajectory);
   if (plan.executed_trajectory)
     plan.executed_trajectory->getRobotTrajectoryMsg(action_res->executed_trajectory);
+  action_res->planning_time = plan.planning_time;
   action_res->error_code = plan.error_code;
 }
 
@@ -264,6 +265,7 @@ bool MoveGroupMoveAction::planUsingPlanningPipeline(const planning_interface::Mo
     plan.plan_components.resize(1);
     plan.plan_components[0].trajectory = res.trajectory;
     plan.plan_components[0].description = "plan";
+    plan.planning_time = res.planning_time;
   }
   plan.error_code = res.error_code;
 
