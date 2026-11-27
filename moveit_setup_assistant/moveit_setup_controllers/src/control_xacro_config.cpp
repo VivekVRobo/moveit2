@@ -174,11 +174,14 @@ void ControlXacroConfig::setControlInterfaces(const ControlInterfaces& ci)
 
     new_joint_interfaces_[joint_name] = default_ci_;
 
-    // Setup the initial state
+    // Setup the initial state from the robot model's default variable position.
+    // This keeps generated fake-hardware state inside the model's intended starting
+    // configuration instead of assuming every joint starts at zero.
     std::vector<double> joint_value;
-    // TODO: There could be an option to load a group state from the RobotPoses
-    //       For now, just assume one DOF, and it is zero
-    joint_value.push_back(0.0);
+    std::map<std::string, double> default_positions;
+    config_data_->get<SRDFConfig>("srdf")->getRobotModel()->getVariableDefaultPositions(default_positions);
+    const auto default_position = default_positions.find(joint_name);
+    joint_value.push_back(default_position != default_positions.end() ? default_position->second : 0.0);
     initial_group_state_.joint_values_[joint_name] = joint_value;
   }
 
